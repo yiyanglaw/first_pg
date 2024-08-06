@@ -40,14 +40,43 @@ conn.commit()
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        text = request.form['text']
-        cur.execute("INSERT INTO texts (content) VALUES (%s)", (text,))
-        conn.commit()
-        return 'Text saved successfully!'
+        if 'submit' in request.form:
+            text = request.form['text']
+            cur.execute("INSERT INTO texts (content) VALUES (%s)", (text,))
+            conn.commit()
+            return 'Text saved successfully!'
+        elif 'view' in request.form:
+            cur.execute("SELECT * FROM texts")
+            rows = cur.fetchall()
+            return render_template_string('''
+                <form method="post">
+                    <textarea name="text"></textarea>
+                    <input type="submit" name="submit" value="Submit">
+                </form>
+                <form method="post">
+                    <input type="submit" name="view" value="View All Data">
+                </form>
+                <h2>Stored Data:</h2>
+                <table border="1">
+                    <tr>
+                        <th>ID</th>
+                        <th>Content</th>
+                    </tr>
+                    {% for row in rows %}
+                    <tr>
+                        <td>{{ row[0] }}</td>
+                        <td>{{ row[1] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            ''', rows=rows)
     return render_template_string('''
         <form method="post">
             <textarea name="text"></textarea>
-            <input type="submit" value="Submit">
+            <input type="submit" name="submit" value="Submit">
+        </form>
+        <form method="post">
+            <input type="submit" name="view" value="View All Data">
         </form>
     ''')
 
