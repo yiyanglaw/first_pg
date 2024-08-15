@@ -63,50 +63,54 @@ conn.commit()
 def index():
     message = ""
     if request.method == 'POST':
-        if 'submit_name' in request.form:
-            name = request.form['name']
-            cur.execute("INSERT INTO names (name) VALUES (%s)", (name,))
-            conn.commit()
-            message = 'Name saved successfully!'
-        elif 'submit_age' in request.form:
-            age = request.form['age']
-            cur.execute("INSERT INTO ages (age) VALUES (%s)", (age,))
-            conn.commit()
-            message = 'Age saved successfully!'
-        elif 'submit_date' in request.form:
-            date = request.form['date']
-            cur.execute("INSERT INTO dates (date) VALUES (%s)", (date,))
-            conn.commit()
-            message = 'Date saved successfully!'
-        elif 'view_name' in request.form:
-            cur.execute("SELECT * FROM names")
-            rows = cur.fetchall()
-            return render_template_string(view_template, rows=rows, table_name="Names")
-        elif 'view_age' in request.form:
-            cur.execute("SELECT * FROM ages")
-            rows = cur.fetchall()
-            return render_template_string(view_template, rows=rows, table_name="Ages")
-        elif 'view_date' in request.form:
-            cur.execute("SELECT * FROM dates")
-            rows = cur.fetchall()
-            return render_template_string(view_template, rows=rows, table_name="Dates")
-        elif 'upload_image' in request.form:
-            name = request.form['name']
-            image = request.files['image']
-            if image:
-                image_binary = image.read()
-                cur.execute("INSERT INTO images (name, image) VALUES (%s, %s)", (name, psycopg2.Binary(image_binary)))
+        try:
+            if 'submit_name' in request.form:
+                name = request.form['name']
+                cur.execute("INSERT INTO names (name) VALUES (%s)", (name,))
                 conn.commit()
-                message = 'Image uploaded successfully!'
-        elif 'download_image' in request.form:
-            name = request.form['name']
-            cur.execute("SELECT image FROM images WHERE name = %s", (name,))
-            result = cur.fetchone()
-            if result:
-                image_binary = result[0]
-                return Response(image_binary, mimetype='image/jpeg', headers={"Content-Disposition": f"attachment;filename={name}.jpg"})
-            else:
-                message = "Image not uploaded for this name!"
+                message = 'Name saved successfully!'
+            elif 'submit_age' in request.form:
+                age = request.form['age']
+                cur.execute("INSERT INTO ages (age) VALUES (%s)", (age,))
+                conn.commit()
+                message = 'Age saved successfully!'
+            elif 'submit_date' in request.form:
+                date = request.form['date']
+                cur.execute("INSERT INTO dates (date) VALUES (%s)", (date,))
+                conn.commit()
+                message = 'Date saved successfully!'
+            elif 'view_name' in request.form:
+                cur.execute("SELECT * FROM names")
+                rows = cur.fetchall()
+                return render_template_string(view_template, rows=rows, table_name="Names")
+            elif 'view_age' in request.form:
+                cur.execute("SELECT * FROM ages")
+                rows = cur.fetchall()
+                return render_template_string(view_template, rows=rows, table_name="Ages")
+            elif 'view_date' in request.form:
+                cur.execute("SELECT * FROM dates")
+                rows = cur.fetchall()
+                return render_template_string(view_template, rows=rows, table_name="Dates")
+            elif 'upload_image' in request.form:
+                name = request.form['name']
+                image = request.files['image']
+                if image:
+                    image_binary = image.read()
+                    cur.execute("INSERT INTO images (name, image) VALUES (%s, %s)", (name, psycopg2.Binary(image_binary)))
+                    conn.commit()
+                    message = 'Image uploaded successfully!'
+            elif 'download_image' in request.form:
+                name = request.form['name']
+                cur.execute("SELECT image FROM images WHERE name = %s", (name,))
+                result = cur.fetchone()
+                if result:
+                    image_binary = result[0]
+                    return Response(image_binary, mimetype='image/jpeg', headers={"Content-Disposition": f"attachment;filename={name}.jpg"})
+                else:
+                    message = "Image not uploaded for this name!"
+        except Exception as e:
+            conn.rollback()  # Roll back the transaction to reset the state
+            message = f"An error occurred: {str(e)}"
 
     return render_template_string(main_template, message=message)
 
