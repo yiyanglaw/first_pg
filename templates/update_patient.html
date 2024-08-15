@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-center mb-4">Update Patient</h1>
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ patient[1] }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="ic" class="form-label">IC</label>
+                <input type="text" class="form-control" id="ic" name="ic" value="{{ patient[2] }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="text" class="form-control" id="phone" name="phone" value="{{ patient[3] }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="age" class="form-label">Age</label>
+                <input type="number" class="form-control" id="age" name="age" value="{{ patient[4] }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="gender" class="form-label">Gender</label>
+                <select class="form-select" id="gender" name="gender" required>
+                    <option value="Male" {% if patient[5] == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if patient[5] == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if patient[5] == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea class="form-control" id="address" name="address" rows="3" required>{{ patient[6] }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label for="image" class="form-label">Patient Image</label>
+                <input type="file" class="form-control" id="image" name="image">
+            </div>
+            <div class="mb-3">
+                <label for="medicine_type" class="form-label">Medicine Type</label>
+                <input type="text" class="form-control" id="medicine_type" name="medicine_type" value="{{ patient[8] }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="medicine_interval" class="form-label">Medicine Interval (hours)</label>
+                <input type="number" class="form-control" id="medicine_interval" name="medicine_interval" value="{{ patient[9] }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="medicine_frequency" class="form-label">Medicine Frequency (times per day)</label>
+                <input type="number" class="form-control" id="medicine_frequency" name="medicine_frequency" value="{{ patient[10] }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Patient</button>
+        </form>
+
+        <h2 class="mt-5">Heart Rate Records</h2>
+        <form method="post" action="{{ url_for('add_heart_rate', patient_id=patient[0]) }}">
+            <div class="mb-3">
+                <label for="heart_rate_date" class="form-label">Date</label>
+                <input type="date" class="form-control" id="heart_rate_date" name="date" required>
+            </div>
+            <div class="mb-3">
+                <label for="heart_rate" class="form-label">Heart Rate</label>
+                <input type="number" class="form-control" id="heart_rate" name="rate" required>
+            </div>
+            <button type="submit" class="btn btn-secondary">Add Heart Rate</button>
+        </form>
+
+        <h2 class="mt-5">Medicine Intake</h2>
+        <form method="post" action="{{ url_for('add_medicine_intake', patient_id=patient[0]) }}">
+            <div class="mb-3">
+                <label for="intake_date" class="form-label">Date</label>
+                <input type="date" class="form-control" id="intake_date" name="date" required>
+            </div>
+            <div class="mb-3">
+                <label for="taken" class="form-label">Medicine Taken?</label>
+                <select class="form-select" id="taken" name="taken" required>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Add Medicine Intake</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

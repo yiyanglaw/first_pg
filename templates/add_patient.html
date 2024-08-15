@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-center mb-4">Add New Patient</h1>
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="ic" class="form-label">IC</label>
+                <input type="text" class="form-control" id="ic" name="ic" required>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="text" class="form-control" id="phone" name="phone" required>
+            </div>
+            <div class="mb-3">
+                <label for="age" class="form-label">Age</label>
+                <input type="number" class="form-control" id="age" name="age" required>
+            </div>
+            <div class="mb-3">
+                <label for="gender" class="form-label">Gender</label>
+                <select class="form-select" id="gender" name="gender" required>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="image" class="form-label">Patient Image</label>
+                <input type="file" class="form-control" id="image" name="image">
+            </div>
+            <div class="mb-3">
+                <label for="medicine_type" class="form-label">Medicine Type</label>
+                <input type="text" class="form-control" id="medicine_type" name="medicine_type" required>
+            </div>
+            <div class="mb-3">
+                <label for="medicine_interval" class="form-label">Medicine Interval (hours)</label>
+                <input type="number" class="form-control" id="medicine_interval" name="medicine_interval" required>
+            </div>
+            <div class="mb-3">
+                <label for="medicine_frequency" class="form-label">Medicine Frequency (times per day)</label>
+                <input type="number" class="form-control" id="medicine_frequency" name="medicine_frequency" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Patient</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
