@@ -1,23 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="jumbotron">
-    <h1 class="display-4 text-center mb-4">Welcome to the Clinic Management System</h1>
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Get Started</h5>
-                    {% if 'user_id' in session %}
-                        <p class="card-text">You are logged in as {{ session['username'] }}.</p>
-                        <a href="{{ url_for('main') }}" class="btn btn-primary">Go to Main Page</a>
-                    {% else %}
-                        <p class="card-text">Please login or register to access the system.</p>
-                        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-                        <a href="{{ url_for('register') }}" class="btn btn-secondary">Register</a>
-                    {% endif %}
-                </div>
+<div class="bg-white shadow-xl rounded-lg p-8 max-w-2xl mx-auto">
+    <h1 class="text-4xl font-bold text-center mb-8 text-indigo-600">Welcome to the Clinic Management System</h1>
+    <div class="text-center">
+        {% if 'user_id' in session %}
+            <p class="mb-4 text-lg">You are logged in as <span class="font-semibold">{{ session['username'] }}</span>.</p>
+            <a href="{{ url_for('main') }}" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">Go to Main Page</a>
+        {% else %}
+            <p class="mb-4 text-lg">Please login or register to access the system.</p>
+            <div class="space-x-4">
+                <a href="{{ url_for('login') }}" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-300">Login</a>
+                <a href="{{ url_for('register') }}" class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition duration-300">Register</a>
             </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
