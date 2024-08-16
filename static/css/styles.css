@@ -1,65 +1,76 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-
 body {
+    background-color: #0a192f;
+    color: #8892b0;
     font-family: 'Roboto', sans-serif;
 }
 
-.btn {
-    @apply font-bold py-2 px-4 rounded;
+.tech-background {
+    background-image: url('path/to/tech-background.jpg');
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    padding: 2rem 0;
 }
 
-.btn-blue {
-    @apply bg-blue-500 text-white;
+.navbar {
+    background-color: rgba(10, 25, 47, 0.8);
+    backdrop-filter: blur(10px);
 }
 
-.btn-blue:hover {
-    @apply bg-blue-700;
+.tech-card {
+    background-color: rgba(17, 34, 64, 0.8);
+    border: 1px solid #1d4ed8;
+    box-shadow: 0 0 20px rgba(29, 78, 216, 0.5);
 }
 
-.btn-red {
-    @apply bg-red-500 text-white;
+.tech-btn {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #fff;
+    transition: all 0.3s ease;
 }
 
-.btn-red:hover {
-    @apply bg-red-700;
+.tech-btn:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.7);
 }
 
-.form-input {
-    @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50;
+.tech-input {
+    background-color: rgba(17, 34, 64, 0.8);
+    border: 1px solid #1d4ed8;
+    color: #fff;
+}
+
+.tech-input:focus {
+    background-color: rgba(17, 34, 64, 0.9);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+    color: #fff;
+}
+
+.tech-table {
+    background-color: rgba(17, 34, 64, 0.8);
+    color: #8892b0;
+}
+
+.tech-table thead {
+    background-color: #1d4ed8;
+    color: #fff;
+}
+
+.glow-text {
+    color: #fff;
+    text-shadow: 0 0 10px rgba(29, 78, 216, 0.7);
 }
 
 .form-label {
-    @apply block text-sm font-medium text-gray-700;
+    color: #fff;
 }
 
-.card {
-    @apply bg-white shadow-md rounded-lg p-6;
-}
-
-.card-title {
-    @apply text-lg font-semibold mb-4;
-}
-
-.table {
-    @apply min-w-full divide-y divide-gray-200;
-}
-
-.table th {
-    @apply px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
-}
-
-.table td {
-    @apply px-6 py-4 whitespace-nowrap;
-}
-
-.table-striped tbody tr:nth-child(even) {
-    @apply bg-gray-50;
-}
-
-.nav-link {
-    @apply text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium;
-}
-
-.nav-link-active {
-    @apply bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium;
+.tech-form {
+    background-color: rgba(17, 34, 64, 0.8);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(29, 78, 216, 0.5);
 }
