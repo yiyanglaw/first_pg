@@ -46,10 +46,29 @@
             </div>
             <div class="mb-3">
                 <label for="medicine_frequency" class="form-label">Medicine Frequency (times per day)</label>
-                <input type="number" class="form-control" id="medicine_frequency" name="medicine_frequency" required>
+                <input type="number" class="form-control" id="medicine_frequency" name="medicine_frequency" required onchange="updateMedicineTimes()">
             </div>
+            <div id="medicine_times_container"></div>
             <button type="submit" class="btn btn-primary">Add Patient</button>
         </form>
     </div>
 </div>
+
+<script>
+function updateMedicineTimes() {
+    const frequency = document.getElementById('medicine_frequency').value;
+    const container = document.getElementById('medicine_times_container');
+    container.innerHTML = '';
+    
+    for (let i = 1; i <= frequency; i++) {
+        const div = document.createElement('div');
+        div.className = 'mb-3';
+        div.innerHTML = `
+            <label for="medicine_time_${i}" class="form-label">Medicine Time ${i}</label>
+            <input type="time" class="form-control" id="medicine_time_${i}" name="medicine_time_${i}" required>
+        `;
+        container.appendChild(div);
+    }
+}
+</script>
 {% endblock %}

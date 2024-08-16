@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 import functools
 from flask import jsonify
+from datetime import datetime, timedelta
 
 
 load_dotenv()
@@ -56,7 +57,8 @@ def create_tables():
         image BYTEA,
         medicine_type TEXT NOT NULL,
         medicine_interval INTEGER NOT NULL,
-        medicine_frequency INTEGER NOT NULL
+        medicine_frequency INTEGER NOT NULL,
+        medicine_times TEXT[]
     )
     """)
     
@@ -74,6 +76,7 @@ def create_tables():
         id SERIAL PRIMARY KEY,
         patient_id INTEGER REFERENCES patients(id),
         date DATE NOT NULL,
+        time TIME NOT NULL,
         taken BOOLEAN NOT NULL
     )
     """)
@@ -184,15 +187,16 @@ def add_patient():
         image = request.files['image'].read() if 'image' in request.files else None
         medicine_type = request.form['medicine_type']
         medicine_interval = request.form['medicine_interval']
-        medicine_frequency = request.form['medicine_frequency']
+        medicine_frequency = int(request.form['medicine_frequency'])
+        medicine_times = [request.form.get(f'medicine_time_{i}') for i in range(1, medicine_frequency + 1)]
         
         conn = get_db_connection()
         cur = conn.cursor()
         
         cur.execute("""
-        INSERT INTO patients (name, ic, phone, age, gender, address, image, medicine_type, medicine_interval, medicine_frequency)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (name, ic, phone, age, gender, address, psycopg2.Binary(image) if image else None, medicine_type, medicine_interval, medicine_frequency))
+        INSERT INTO patients (name, ic, phone, age, gender, address, image, medicine_type, medicine_interval, medicine_frequency, medicine_times)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (name, ic, phone, age, gender, address, psycopg2.Binary(image) if image else None, medicine_type, medicine_interval, medicine_frequency, medicine_times))
         
         conn.commit()
         cur.close()
@@ -219,24 +223,25 @@ def update_patient(id):
         image = request.files['image'].read() if 'image' in request.files else None
         medicine_type = request.form['medicine_type']
         medicine_interval = request.form['medicine_interval']
-        medicine_frequency = request.form['medicine_frequency']
+        medicine_frequency = int(request.form['medicine_frequency'])
+        medicine_times = [request.form.get(f'medicine_time_{i}') for i in range(1, medicine_frequency + 1)]
         
         if image:
             cur.execute("""
             UPDATE patients 
             SET name=%s, ic=%s, phone=%s, age=%s, gender=%s, address=%s, image=%s, 
-                medicine_type=%s, medicine_interval=%s, medicine_frequency=%s
+                medicine_type=%s, medicine_interval=%s, medicine_frequency=%s, medicine_times=%s
             WHERE id=%s
             """, (name, ic, phone, age, gender, address, psycopg2.Binary(image), 
-                  medicine_type, medicine_interval, medicine_frequency, id))
+                  medicine_type, medicine_interval, medicine_frequency, medicine_times, id))
         else:
             cur.execute("""
             UPDATE patients 
             SET name=%s, ic=%s, phone=%s, age=%s, gender=%s, address=%s, 
-                medicine_type=%s, medicine_interval=%s, medicine_frequency=%s
+                medicine_type=%s, medicine_interval=%s, medicine_frequency=%s, medicine_times=%s
             WHERE id=%s
             """, (name, ic, phone, age, gender, address, 
-                  medicine_type, medicine_interval, medicine_frequency, id))
+                  medicine_type, medicine_interval, medicine_frequency, medicine_times, id))
         
         conn.commit()
         flash('Patient updated successfully.', 'success')
@@ -249,6 +254,10 @@ def update_patient(id):
     conn.close()
     
     return render_template('update_patient.html', patient=patient)
+
+
+
+
 
 @app.route('/delete_patient/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -298,13 +307,14 @@ def add_heart_rate(patient_id):
 @login_required
 def add_medicine_intake(patient_id):
     date = request.form['date']
+    time = request.form['time']
     taken = request.form['taken'] == 'yes'
     
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute("INSERT INTO medicine_intakes (patient_id, date, taken) VALUES (%s, %s, %s)", 
-                (patient_id, date, taken))
+    cur.execute("INSERT INTO medicine_intakes (patient_id, date, time, taken) VALUES (%s, %s, %s, %s)", 
+                (patient_id, date, time, taken))
     conn.commit()
     
     cur.close()
@@ -350,13 +360,47 @@ def dashboard():
     cur.execute("SELECT COUNT(*) FROM medicine_intakes WHERE date = CURRENT_DATE")
     medicine_intakes_today = cur.fetchone()[0]
     
+    today = datetime.now().date()
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+    
+    cur.execute("""
+    SELECT p.name, COUNT(*) as missed_doses
+    FROM patients p
+    LEFT JOIN medicine_intakes mi ON p.id = mi.patient_id
+    WHERE mi.date BETWEEN %s AND %s AND (mi.taken = FALSE OR mi.taken IS NULL)
+    GROUP BY p.id
+    ORDER BY missed_doses DESC
+    LIMIT 5
+    """, (week_ago, today))
+    missed_doses_week = cur.fetchall()
+    
+    cur.execute("""
+    SELECT p.name, AVG(hr.rate) as avg_rate
+    FROM patients p
+    JOIN heart_rates hr ON p.id = hr.patient_id
+    WHERE hr.date BETWEEN %s AND %s
+    GROUP BY p.id
+    HAVING 
+        (p.age BETWEEN 1 AND 2 AND (AVG(hr.rate) < 80 OR AVG(hr.rate) > 130)) OR
+        (p.age BETWEEN 3 AND 5 AND (AVG(hr.rate) < 80 OR AVG(hr.rate) > 120)) OR
+        (p.age BETWEEN 6 AND 12 AND (AVG(hr.rate) < 70 OR AVG(hr.rate) > 110)) OR
+        (p.age BETWEEN 13 AND 18 AND (AVG(hr.rate) < 60 OR AVG(hr.rate) > 100)) OR
+        (p.age >= 19 AND (AVG(hr.rate) < 60 OR AVG(hr.rate) > 100))
+    ORDER BY avg_rate DESC
+    LIMIT 5
+    """, (month_ago, today))
+    unhealthy_heart_rates = cur.fetchall()
+    
     cur.close()
     conn.close()
     
     return render_template('dashboard.html', 
                            total_patients=total_patients,
                            new_patients_this_month=new_patients_this_month,
-                           medicine_intakes_today=medicine_intakes_today)
+                           medicine_intakes_today=medicine_intakes_today,
+                           missed_doses_week=missed_doses_week,
+                           unhealthy_heart_rates=unhealthy_heart_rates)
 
 
 @app.errorhandler(404)
