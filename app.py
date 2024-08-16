@@ -38,14 +38,6 @@ def create_tables():
     cur = conn.cursor()
     
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
-    )
-    """)
-    
-    cur.execute("""
     CREATE TABLE IF NOT EXISTS patients (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -65,7 +57,7 @@ def create_tables():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS heart_rates (
         id SERIAL PRIMARY KEY,
-        patient_id INTEGER REFERENCES patients(id),
+        patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
         date DATE NOT NULL,
         rate INTEGER NOT NULL
     )
@@ -74,9 +66,8 @@ def create_tables():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS medicine_intakes (
         id SERIAL PRIMARY KEY,
-        patient_id INTEGER REFERENCES patients(id),
+        patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
         date DATE NOT NULL,
-        time TIME NOT NULL,
         taken BOOLEAN NOT NULL
     )
     """)
@@ -206,7 +197,7 @@ def add_patient():
         return redirect(url_for('main'))
     
     return render_template('add_patient.html')
-
+    
 @app.route('/update_patient/<int:id>', methods=['GET', 'POST'])
 @login_required
 def update_patient(id):
@@ -256,7 +247,16 @@ def update_patient(id):
     return render_template('update_patient.html', patient=patient)
 
 
-
+@app.route('/reset_db')
+def reset_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DROP TABLE IF EXISTS patients")
+    conn.commit()
+    cur.close()
+    conn.close()
+    create_tables()
+    return "Database reset successfully"
 
 
 @app.route('/delete_patient/<int:id>', methods=['GET', 'POST'])
@@ -274,16 +274,21 @@ def delete_patient(id):
     
     if request.method == 'POST':
         if request.form.get('confirm') == 'yes':
+            # Delete associated records first
+            cur.execute("DELETE FROM heart_rates WHERE patient_id = %s", (id,))
+            cur.execute("DELETE FROM medicine_intakes WHERE patient_id = %s", (id,))
+            
+            # Now delete the patient
             cur.execute("DELETE FROM patients WHERE id = %s", (id,))
             conn.commit()
-            flash('Patient deleted successfully.', 'success')
+            flash('Patient and associated records deleted successfully.', 'success')
             return redirect(url_for('main'))
     
     cur.close()
     conn.close()
     
     return render_template('delete_patient.html', patient=patient)
-
+    
 @app.route('/add_heart_rate/<int:patient_id>', methods=['POST'])
 @login_required
 def add_heart_rate(patient_id):
