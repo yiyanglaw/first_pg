@@ -1,34 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinic Management System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body class="bg-gray-100 font-sans">
-    <nav class="bg-indigo-600 text-white shadow-lg">
-        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-            <a class="font-bold text-xl" href="{{ url_for('home') }}">CMS</a>
-            <div class="flex items-center">
-                {% if 'user_id' in session %}
-                    <a class="px-4 py-2 rounded hover:bg-indigo-700" href="{{ url_for('main') }}">Patients</a>
-                    <a class="px-4 py-2 rounded hover:bg-indigo-700" href="{{ url_for('dashboard') }}">Dashboard</a>
-                    <a class="px-4 py-2 rounded hover:bg-indigo-700" href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a class="px-4 py-2 rounded hover:bg-indigo-700" href="{{ url_for('login') }}">Login</a>
-                    <a class="px-4 py-2 rounded hover:bg-indigo-700" href="{{ url_for('register') }}">Register</a>
-                {% endif %}
+{% extends "base.html" %}
+{% block content %}
+<div class="tech-background">
+    <div class="container">
+        <h1 class="display-4 text-center mb-4 glow-text">Welcome to the Clinic Management System</h1>
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="card tech-card">
+                    <div class="card-body">
+                        <h5 class="card-title glow-text">Get Started</h5>
+                        {% if 'user_id' in session %}
+                            <p class="card-text">You are logged in as {{ session['username'] }}.</p>
+                            <a href="{{ url_for('main') }}" class="btn btn-primary tech-btn">Go to Main Page</a>
+                        {% else %}
+                            <p class="card-text">Please login or register to access the system.</p>
+                            <a href="{{ url_for('login') }}" class="btn btn-primary tech-btn">Login</a>
+                            <a href="{{ url_for('register') }}" class="btn btn-secondary tech-btn">Register</a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
-    </nav>
-    <main class="container mx-auto mt-8 px-4">
-        {% block content %}{% endblock %}
-    </main>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-    {% block scripts %}{% endblock %}
-</body>
-</html>
+    </div>
+</div>
+{% endblock %}
