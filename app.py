@@ -15,7 +15,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-DATABASE_URL = postgresql://first_5rke_user:N4g4IbduO1OZ5w9PaExS907BHibpay5m@dpg-cqvifr5svqrc73c3jovg-a/first_5rke
+DATABASE_URL = "postgresql://first_5rke_user:N4g4IbduO1OZ5w9PaExS907BHibpay5m@dpg-cqvifr5svqrc73c3jovg-a/first_5rke"
 
 result = urlparse(DATABASE_URL)
 username = result.username
