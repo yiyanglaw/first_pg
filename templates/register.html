@@ -1,20 +1,17 @@
 {% extends "base.html" %}
-
 {% block content %}
-<h1 class="text-center mb-4">Register</h1>
-<div class="row">
-    <div class="col-md-6 offset-md-3">
-        <form method="post">
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Register</button>
-        </form>
-    </div>
+<div class="bg-white shadow-xl rounded-lg p-8 max-w-md mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">Register</h1>
+    <form method="post">
+        <div class="mb-6">
+            <label for="username" class="block mb-2 text-sm font-medium text-gray-600">Username</label>
+            <input type="text" class="w-full px-3 py-2 placeholder-gray-300 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-indigo-100 focus:border-indigo-300" id="username" name="username" required>
+        </div>
+        <div class="mb-6">
+            <label for="password" class="block mb-2 text-sm font-medium text-gray-600">Password</label>
+            <input type="password" class="w-full px-3 py-2 placeholder-gray-300 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-indigo-100 focus:border-indigo-300" id="password" name="password" required>
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:shadow-outline-indigo focus:border-indigo-700">Register</button>
+    </form>
 </div>
 {% endblock %}
