@@ -354,8 +354,7 @@ def dashboard():
     cur.execute("SELECT COUNT(*) FROM patients")
     total_patients = cur.fetchone()[0]
     
-    cur.execute("SELECT COUNT(*) FROM patients WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)")
-    new_patients_this_month = cur.fetchone()[0]
+    # Remove the query for new_patients_this_month as we don't have a created_at column
     
     cur.execute("SELECT COUNT(*) FROM medicine_intakes WHERE date = CURRENT_DATE")
     medicine_intakes_today = cur.fetchone()[0]
@@ -397,12 +396,9 @@ def dashboard():
     
     return render_template('dashboard.html', 
                            total_patients=total_patients,
-                           new_patients_this_month=new_patients_this_month,
                            medicine_intakes_today=medicine_intakes_today,
                            missed_doses_week=missed_doses_week,
                            unhealthy_heart_rates=unhealthy_heart_rates)
-
-
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404
