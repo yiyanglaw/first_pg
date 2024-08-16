@@ -58,32 +58,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Function to toggle password visibility
-    const togglePassword = (button, inputId) => {
-        const input = document.getElementById(inputId);
-        if (input.type === 'password') {
-            input.type = 'text';
-            button.textContent = 'Hide';
-        } else {
-            input.type = 'password';
-            button.textContent = 'Show';
-        }
-    };
-
-    // Add password toggle functionality
-    const passwordToggle = document.getElementById('passwordToggle');
-    if (passwordToggle) {
-        passwordToggle.addEventListener('click', function() {
-            togglePassword(this, 'password');
-        });
-    }
-
     // Function to filter patients table
     const filterTable = (input) => {
         const filter = input.value.toUpperCase();
         const table = document.querySelector('table');
         const rows = table.getElementsByTagName('tr');
-
         for (let i = 1; i < rows.length; i++) {
             const nameCell = rows[i].getElementsByTagName('td')[0];
             const phoneCell = rows[i].getElementsByTagName('td')[2];
@@ -146,29 +125,113 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Add sorting functionality to table headers
+    // Add sorting functionality to table headers
     document.querySelectorAll('th').forEach((header, index) => {
         header.addEventListener('click', function() {
             sortTable(index);
         });
     });
 
-    // Function to show/hide additional patient info
-    const togglePatientInfo = (button, patientId) => {
-        const infoDiv = document.getElementById(`patientInfo-${patientId}`);
-        if (infoDiv.style.display === 'none') {
-            infoDiv.style.display = 'block';
-            button.textContent = 'Hide Details';
+    // Function to toggle password visibility
+    const togglePassword = (button, inputId) => {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            button.textContent = 'Hide';
         } else {
-            infoDiv.style.display = 'none';
-            button.textContent = 'Show Details';
+            input.type = 'password';
+            button.textContent = 'Show';
         }
     };
 
-    // Add event listeners to toggle patient info buttons
-    document.querySelectorAll('.toggle-info').forEach(button => {
-        button.addEventListener('click', function() {
-            const patientId = this.getAttribute('data-patient-id');
-            togglePatientInfo(this, patientId);
+    // Add password toggle functionality
+    const passwordToggle = document.getElementById('passwordToggle');
+    if (passwordToggle) {
+        passwordToggle.addEventListener('click', function() {
+            togglePassword(this, 'password');
         });
-    });
+    }
+
+    // Function to handle pagination
+    const paginate = (items, itemsPerPage, currentPage) => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return items.slice(startIndex, startIndex + itemsPerPage);
+    };
+
+    // Add pagination to patient table
+    const patientsTable = document.getElementById('patientsTable');
+    if (patientsTable) {
+        const itemsPerPage = 10;
+        const rows = Array.from(patientsTable.querySelectorAll('tbody tr'));
+        const pageCount = Math.ceil(rows.length / itemsPerPage);
+        let currentPage = 1;
+
+        const updateTable = () => {
+            const paginatedRows = paginate(rows, itemsPerPage, currentPage);
+            patientsTable.querySelector('tbody').innerHTML = '';
+            paginatedRows.forEach(row => patientsTable.querySelector('tbody').appendChild(row));
+        };
+
+        const createPagination = () => {
+            const pagination = document.createElement('nav');
+            pagination.innerHTML = `
+                <ul class="pagination justify-content-center">
+                    <li class="page-item"><a class="page-link" href="#" id="prevPage">Previous</a></li>
+                    <li class="page-item"><a class="page-link" href="#" id="nextPage">Next</a></li>
+                </ul>
+            `;
+            patientsTable.parentNode.insertBefore(pagination, patientsTable.nextSibling);
+
+            document.getElementById('prevPage').addEventListener('click', (e) => {
+                e.preventDefault();
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTable();
+                }
+            });
+
+            document.getElementById('nextPage').addEventListener('click', (e) => {
+                e.preventDefault();
+                if (currentPage < pageCount) {
+                    currentPage++;
+                    updateTable();
+                }
+            });
+        };
+
+        updateTable();
+        createPagination();
+    }
+
+    // Function to create charts for patient data
+    const createCharts = () => {
+        const ctx = document.getElementById('heartRateChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: heartRateDates,
+                    datasets: [{
+                        label: 'Heart Rate',
+                        data: heartRates,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    };
+
+    // Call createCharts if the chart container exists
+    if (document.getElementById('heartRateChart')) {
+        createCharts();
+    }
 });

@@ -6,6 +6,8 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 import functools
+from flask import jsonify
+
 
 load_dotenv()
 
@@ -107,11 +109,11 @@ def register():
         try:
             cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))
             conn.commit()
-            flash('Registration successful. Please log in.')
+            flash('Registration successful. Please log in.', 'success')
             return redirect(url_for('login'))
         except psycopg2.IntegrityError:
             conn.rollback()
-            flash('Username already exists.')
+            flash('Username already exists.', 'danger')
         finally:
             cur.close()
             conn.close()
@@ -135,17 +137,19 @@ def login():
         
         if user and check_password_hash(user[2], password):
             session['user_id'] = user[0]
-            flash('Login successful.')
+            session['username'] = user[1]
+            flash('Login successful.', 'success')
             return redirect(url_for('main'))
         else:
-            flash('Invalid username or password.')
+            flash('Invalid username or password.', 'danger')
     
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
-    flash('You have been logged out.')
+    session.pop('username', None)
+    flash('You have been logged out.', 'success')
     return redirect(url_for('home'))
 
 @app.route('/main')
@@ -194,7 +198,7 @@ def add_patient():
         cur.close()
         conn.close()
         
-        flash('Patient added successfully.')
+        flash('Patient added successfully.', 'success')
         return redirect(url_for('main'))
     
     return render_template('add_patient.html')
@@ -235,7 +239,7 @@ def update_patient(id):
                   medicine_type, medicine_interval, medicine_frequency, id))
         
         conn.commit()
-        flash('Patient updated successfully.')
+        flash('Patient updated successfully.', 'success')
         return redirect(url_for('main'))
     
     cur.execute("SELECT * FROM patients WHERE id = %s", (id,))
@@ -246,20 +250,30 @@ def update_patient(id):
     
     return render_template('update_patient.html', patient=patient)
 
-@app.route('/delete_patient/<int:id>')
+@app.route('/delete_patient/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_patient(id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute("DELETE FROM patients WHERE id = %s", (id,))
-    conn.commit()
+    cur.execute("SELECT * FROM patients WHERE id = %s", (id,))
+    patient = cur.fetchone()
+    
+    if patient is None:
+        flash('Patient not found.', 'danger')
+        return redirect(url_for('main'))
+    
+    if request.method == 'POST':
+        if request.form.get('confirm') == 'yes':
+            cur.execute("DELETE FROM patients WHERE id = %s", (id,))
+            conn.commit()
+            flash('Patient deleted successfully.', 'success')
+            return redirect(url_for('main'))
     
     cur.close()
     conn.close()
     
-    flash('Patient deleted successfully.')
-    return redirect(url_for('main'))
+    return render_template('delete_patient.html', patient=patient)
 
 @app.route('/add_heart_rate/<int:patient_id>', methods=['POST'])
 @login_required
@@ -277,7 +291,7 @@ def add_heart_rate(patient_id):
     cur.close()
     conn.close()
     
-    flash('Heart rate added successfully.')
+    flash('Heart rate added successfully.', 'success')
     return redirect(url_for('update_patient', id=patient_id))
 
 @app.route('/add_medicine_intake/<int:patient_id>', methods=['POST'])
@@ -296,8 +310,76 @@ def add_medicine_intake(patient_id):
     cur.close()
     conn.close()
     
-    flash('Medicine intake recorded successfully.')
+    flash('Medicine intake recorded successfully.', 'success')
     return redirect(url_for('update_patient', id=patient_id))
+
+@app.route('/download_image/<int:patient_id>')
+@login_required
+def download_image(patient_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT image FROM patients WHERE id = %s", (patient_id,))
+    image = cur.fetchone()[0]
+    
+    cur.close()
+    conn.close()
+    
+    if image:
+        return send_file(
+            io.BytesIO(image),
+            mimetype='image/jpeg',
+            as_attachment=True,
+            download_name=f'patient_{patient_id}_image.jpg'
+        )
+    else:
+        abort(404)
+        
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) FROM patients")
+    total_patients = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM patients WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)")
+    new_patients_this_month = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM medicine_intakes WHERE date = CURRENT_DATE")
+    medicine_intakes_today = cur.fetchone()[0]
+    
+    cur.close()
+    conn.close()
+    
+    return render_template('dashboard.html', 
+                           total_patients=total_patients,
+                           new_patients_this_month=new_patients_this_month,
+                           medicine_intakes_today=medicine_intakes_today)
+
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html'), 500
+
+@app.route('/api/patients')
+@login_required
+def api_patients():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM patients")
+        patients = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify([dict(zip([column[0] for column in cur.description], patient)) for patient in patients])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5100, debug=True)

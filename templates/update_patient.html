@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block content %}
 <h1 class="text-center mb-4">Update Patient</h1>
 <div class="row">
@@ -51,7 +50,7 @@
             </div>
             <button type="submit" class="btn btn-primary">Update Patient</button>
         </form>
-
+        
         <h2 class="mt-5">Heart Rate Records</h2>
         <form method="post" action="{{ url_for('add_heart_rate', patient_id=patient[0]) }}">
             <div class="mb-3">
@@ -64,7 +63,7 @@
             </div>
             <button type="submit" class="btn btn-secondary">Add Heart Rate</button>
         </form>
-
+        
         <h2 class="mt-5">Medicine Intake</h2>
         <form method="post" action="{{ url_for('add_medicine_intake', patient_id=patient[0]) }}">
             <div class="mb-3">
