@@ -1,76 +1,28 @@
 body {
-    background-color: #0a192f;
-    color: #8892b0;
-    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
 }
-
-.tech-background {
-    background-image: url('path/to/tech-background.jpg');
-    background-size: cover;
-    background-position: center;
-    min-height: 100vh;
-    padding: 2rem 0;
-}
-
 .navbar {
-    background-color: rgba(10, 25, 47, 0.8);
-    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
 }
-
-.tech-card {
-    background-color: rgba(17, 34, 64, 0.8);
-    border: 1px solid #1d4ed8;
-    box-shadow: 0 0 20px rgba(29, 78, 216, 0.5);
+.table {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,.05);
 }
-
-.tech-btn {
-    background-color: #1d4ed8;
-    border-color: #1d4ed8;
-    color: #fff;
-    transition: all 0.3s ease;
+.form-control:focus {
+    border-color: #2C3E50;
+    box-shadow: 0 0 0 0.2rem rgba(44,62,80,.25);
 }
-
-.tech-btn:hover {
-    background-color: #2563eb;
-    border-color: #2563eb;
-    box-shadow: 0 0 15px rgba(37, 99, 235, 0.7);
+.btn-primary {
+    background-color: #2C3E50;
+    border-color: #2C3E50;
 }
-
-.tech-input {
-    background-color: rgba(17, 34, 64, 0.8);
-    border: 1px solid #1d4ed8;
-    color: #fff;
+.btn-primary:hover {
+    background-color: #1a252f;
+    border-color: #1a252f;
 }
-
-.tech-input:focus {
-    background-color: rgba(17, 34, 64, 0.9);
-    border-color: #2563eb;
-    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
-    color: #fff;
-}
-
-.tech-table {
-    background-color: rgba(17, 34, 64, 0.8);
-    color: #8892b0;
-}
-
-.tech-table thead {
-    background-color: #1d4ed8;
-    color: #fff;
-}
-
-.glow-text {
-    color: #fff;
-    text-shadow: 0 0 10px rgba(29, 78, 216, 0.7);
-}
-
-.form-label {
-    color: #fff;
-}
-
-.tech-form {
-    background-color: rgba(17, 34, 64, 0.8);
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(29, 78, 216, 0.5);
+.jumbotron {
+    background-color: #ecf0f1;
+    padding: 2rem 1rem;
+    margin-bottom: 2rem;
+    border-radius: 0.3rem;
 }
