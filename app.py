@@ -73,6 +73,7 @@ def create_tables():
         id SERIAL PRIMARY KEY,
         patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
         date DATE NOT NULL,
+        time TIME NOT NULL,
         taken BOOLEAN NOT NULL
     )
     """)
@@ -301,13 +302,14 @@ def add_heart_rate(patient_id):
 @login_required
 def add_medicine_intake(patient_id):
     date = request.form['date']
+    time = request.form['time']
     taken = request.form['taken'] == 'yes'
     
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute("INSERT INTO medicine_intakes (patient_id, date, taken) VALUES (%s, %s, %s)", 
-                (patient_id, date, taken))
+    cur.execute("INSERT INTO medicine_intakes (patient_id, date, time, taken) VALUES (%s, %s, %s, %s)", 
+                (patient_id, date, time, taken))
     conn.commit()
     
     cur.close()
@@ -347,10 +349,10 @@ def dashboard():
     cur.execute("SELECT COUNT(*) FROM patients")
     total_patients = cur.fetchone()[0]
     
-    cur.execute("SELECT COUNT(*) FROM medicine_intakes WHERE date = CURRENT_DATE")
+    today = datetime.now().date()
+    cur.execute("SELECT COUNT(*) FROM medicine_intakes WHERE date = %s", (today,))
     medicine_intakes_today = cur.fetchone()[0]
     
-    today = datetime.now().date()
     week_ago = today - timedelta(days=7)
     month_ago = today - timedelta(days=30)
     
@@ -358,7 +360,7 @@ def dashboard():
     SELECT p.name, COUNT(*) as missed_doses
     FROM patients p
     LEFT JOIN medicine_intakes mi ON p.id = mi.patient_id
-    WHERE mi.date BETWEEN %s AND %s AND (mi.taken = FALSE OR mi.taken IS NULL)
+    WHERE mi.date BETWEEN %s AND %s AND mi.taken = FALSE
     GROUP BY p.id
     ORDER BY missed_doses DESC
     LIMIT 5
@@ -385,27 +387,23 @@ def dashboard():
     patient_name = request.form.get('patient_name', '')
     if patient_name:
         cur.execute("""
-        SELECT p.name, mi.date, mi.taken, hr.rate
+        SELECT p.id, p.name, p.medicine_frequency, p.medicine_times, mi.date, mi.time, mi.taken, hr.rate
         FROM patients p
         LEFT JOIN medicine_intakes mi ON p.id = mi.patient_id
         LEFT JOIN heart_rates hr ON p.id = hr.patient_id AND mi.date = hr.date
         WHERE LOWER(p.name) LIKE LOWER(%s)
-        ORDER BY mi.date DESC
+        ORDER BY mi.date DESC, mi.time DESC
         """, (f'%{patient_name}%',))
         patient_records = cur.fetchall()
         
-        cur.execute("""
-        SELECT p.age
-        FROM patients p
-        WHERE LOWER(p.name) LIKE LOWER(%s)
-        """, (f'%{patient_name}%',))
-        patient_age = cur.fetchone()[0] if cur.rowcount > 0 else None
-        
-        heart_rate_levels = []
-        for record in patient_records:
-            if record[3]:  # If heart rate is recorded
-                rate = record[3]
-                if patient_age:
+        if patient_records:
+            patient_id = patient_records[0][0]
+            cur.execute("SELECT age FROM patients WHERE id = %s", (patient_id,))
+            patient_age = cur.fetchone()[0] if cur.rowcount > 0 else None
+            heart_rate_levels = []
+            for record in patient_records:
+                if record[7]:  # If heart rate is recorded
+                    rate = record[7]
                     if 1 <= patient_age <= 2:
                         level = 'Normal' if 80 <= rate <= 130 else 'Abnormal'
                     elif 3 <= patient_age <= 5:
@@ -416,55 +414,35 @@ def dashboard():
                         level = 'Normal' if 60 <= rate <= 100 else 'Abnormal'
                     else:
                         level = 'Normal' if 60 <= rate <= 100 else 'Abnormal'
+                    heart_rate_levels.append(level)
                 else:
-                    level = 'Unknown'
-                heart_rate_levels.append(level)
-            else:
-                heart_rate_levels.append('No data')
-        
-        # Get statistics for the selected patient
-        cur.execute("""
-        SELECT 
-            SUM(CASE WHEN mi.taken = FALSE OR mi.taken IS NULL THEN 1 ELSE 0 END) as missed_doses,
-            COUNT(*) as total_doses,
-            AVG(hr.rate) as avg_heart_rate
-        FROM patients p
-        LEFT JOIN medicine_intakes mi ON p.id = mi.patient_id
-        LEFT JOIN heart_rates hr ON p.id = hr.patient_id
-        WHERE LOWER(p.name) LIKE LOWER(%s)
-        """, (f'%{patient_name}%',))
-        patient_stats = cur.fetchone()
-        
-        # Get data for graphs
-        cur.execute("""
-        SELECT 
-            DATE_TRUNC('day', mi.date) as date,
-            SUM(CASE WHEN mi.taken = FALSE OR mi.taken IS NULL THEN 1 ELSE 0 END) as missed_doses
-        FROM patients p
-        LEFT JOIN medicine_intakes mi ON p.id = mi.patient_id
-        WHERE LOWER(p.name) LIKE LOWER(%s)
-        GROUP BY DATE_TRUNC('day', mi.date)
-        ORDER BY DATE_TRUNC('day', mi.date)
-        """, (f'%{patient_name}%',))
-        missed_doses_data = cur.fetchall()
-        
-        cur.execute("""
-        SELECT 
-            DATE_TRUNC('day', hr.date) as date,
-            AVG(hr.rate) as avg_heart_rate
-        FROM patients p
-        LEFT JOIN heart_rates hr ON p.id = hr.patient_id
-        WHERE LOWER(p.name) LIKE LOWER(%s)
-        GROUP BY DATE_TRUNC('day', hr.date)
-        ORDER BY DATE_TRUNC('day', hr.date)
-        """, (f'%{patient_name}%',))
-        heart_rate_data = cur.fetchall()
+                    heart_rate_levels.append('No data')
+            
+            # Group medicine intakes by date
+            grouped_records = {}
+            for record in patient_records:
+                date = record[4]
+                if date not in grouped_records:
+                    grouped_records[date] = {
+                        'date': date,
+                        'intakes': [{'time': record[5], 'taken': record[6]}],
+                        'heart_rate': record[7]
+                    }
+                else:
+                    grouped_records[date]['intakes'].append({'time': record[5], 'taken': record[6]})
+            
+            # Sort intakes by time for each date
+            for date, data in grouped_records.items():
+                data['intakes'].sort(key=lambda x: x['time'])
+            
+            # Convert back to list and sort by date
+            patient_records = sorted(grouped_records.values(), key=lambda x: x['date'], reverse=True)
+        else:
+            patient_records = []
+            heart_rate_levels = []
     else:
         patient_records = []
         heart_rate_levels = []
-        patient_stats = None
-        missed_doses_data = []
-        heart_rate_data = []
     
     cur.close()
     conn.close()
@@ -475,10 +453,7 @@ def dashboard():
                            missed_doses_week=missed_doses_week,
                            unhealthy_heart_rates=unhealthy_heart_rates,
                            patient_records=patient_records,
-                           heart_rate_levels=heart_rate_levels,
-                           patient_stats=patient_stats,
-                           missed_doses_data=missed_doses_data,
-                           heart_rate_data=heart_rate_data)
+                           heart_rate_levels=heart_rate_levels)
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -503,4 +478,6 @@ def api_patients():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5100, debug=True)
+    app.run(host='0.0.0.0', port=5100, debug=True)            
+        
+        
