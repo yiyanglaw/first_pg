@@ -26,17 +26,17 @@
     <div class="col-md-6">
         <h2>Patients with Most Missed Doses (Last Week)</h2>
         <ul>
-            {% for patient in missed_doses_week %}
+        {% for patient in missed_doses_week %}
             <li>{{ patient[0] }}: {{ patient[1] }} missed doses</li>
-            {% endfor %}
+        {% endfor %}
         </ul>
     </div>
     <div class="col-md-6">
         <h2>Patients with Unhealthy Heart Rates (Last Month)</h2>
         <ul>
-            {% for patient in unhealthy_heart_rates %}
+        {% for patient in unhealthy_heart_rates %}
             <li>{{ patient[0] }}: Average rate {{ patient[1]|round(2) }}</li>
-            {% endfor %}
+        {% endfor %}
         </ul>
     </div>
 </div>
@@ -44,7 +44,7 @@
 <div class="row mt-4">
     <div class="col-md-12">
         <h2>Patient Specific Information</h2>
-        <form method="post">
+        <form method="POST">
             <div class="form-group">
                 <label for="patient_name">Patient Name:</label>
                 <input type="text" class="form-control" id="patient_name" name="patient_name" required>
@@ -68,14 +68,14 @@
                 </tr>
             </thead>
             <tbody>
-                {% for record, level in zip(patient_records, heart_rate_levels) %}
+            {% for record in patient_records %}
                 <tr>
                     <td>{{ record[1] }}</td>
                     <td>{{ 'Yes' if record[2] else 'No' }}</td>
                     <td>{{ record[3] if record[3] else 'N/A' }}</td>
-                    <td>{{ level }}</td>
+                    <td>{{ heart_rate_levels[loop.index0] }}</td>
                 </tr>
-                {% endfor %}
+            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -95,8 +95,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     var missedDosesCtx = document.getElementById('missedDosesChart').getContext('2d');
-    var heartRateCtx = document.getElementById('heartRateChart').getContext('2d');
-
     var missedDosesChart = new Chart(missedDosesCtx, {
         type: 'line',
         data: {
@@ -118,6 +116,7 @@
         }
     });
 
+    var heartRateCtx = document.getElementById('heartRateChart').getContext('2d');
     var heartRateChart = new Chart(heartRateCtx, {
         type: 'line',
         data: {
