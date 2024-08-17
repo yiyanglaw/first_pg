@@ -302,16 +302,22 @@ def add_heart_rate(patient_id):
 @login_required
 def add_medicine_intake(patient_id):
     date = request.form['date']
-    time = request.form['time']
-    taken = request.form['taken'] == 'yes'
     
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute("INSERT INTO medicine_intakes (patient_id, date, time, taken) VALUES (%s, %s, %s, %s)", 
-                (patient_id, date, time, taken))
-    conn.commit()
+    cur.execute("SELECT medicine_frequency FROM patients WHERE id = %s", (patient_id,))
+    medicine_frequency = cur.fetchone()[0]
     
+    for i in range(1, medicine_frequency + 1):
+        time = request.form.get(f'time_{i}')
+        taken = request.form.get(f'taken_{i}') == 'yes'
+        
+        if time:
+            cur.execute("INSERT INTO medicine_intakes (patient_id, date, time, taken) VALUES (%s, %s, %s, %s)", 
+                        (patient_id, date, time, taken))
+    
+    conn.commit()
     cur.close()
     conn.close()
     
@@ -478,6 +484,5 @@ def api_patients():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5100, debug=True)            
-        
+    app.run(host='0.0.0.0', port=5100, debug=True)
         
