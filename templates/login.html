@@ -1,18 +1,77 @@
 {% extends "base.html" %}
 
 {% block content %}
-<divclass="parallax rellax"data-rellax-speed="-3"><img src="https://cdn.pixabay.com/photo/2018/08/14/13/23/ocean-3605547_960_720.jpg" alt="Parallax Background" class="img-fluid"></div><div class="row" id="login-box" style="opacity: 0;"><div class="col-md-6 offset-md-3"><h1 class="text-center mb-4">Login</h1><form method="post"><div class="mb-3"><label for="username" class="form-label">Username</label><input type="text" class="form-control" id="username" name="username" required></div><div class="mb-3"><label for="password" class="form-label">Password</label><input type="password" class="form-control" id="password" name="password" required></div><button type="submit" class="btn btn-primary w-100">Login</button></form></div></div>
-{% endblock %}
-
-{% block scripts %}
-    <!-- Include Rellax.js --><script src="https://cdn.jsdelivr.net/npm/rellax@1.12.1/rellax.min.js"></script><!-- Include Anime.js --><script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script><script>// Initialize Rellaxvar rellax = newRellax('.rellax');
-
-        // Anime.js animation for the login boxanime({
-            targets: '#login-box',
-            opacity: [0, 1],
-            translateY: [-50, 0],
-            easing: 'easeOutQuad',
-            duration: 1000
+<h1class="text-center mb-4">Login</h1><div class="row"><div class="col-md-6 offset-md-3"><form method="post"><div class="mb-3"><label for="username" class="form-label">Username</label><input type="text" class="form-control" id="username" name="username" required></div><div class="mb-3"><label for="password" class="form-label">Password</label><div class="input-group"><input type="password" class="form-control" id="password" name="password" required><button class="btn btn-outline-secondary" type="button" id="passwordToggle">Show</button></div></div><button type="submit" class="btn btn-primary">Login</button></form></div></div><!-- WebGL Canvas for the background --><canvas id="bgCanvas"></canvas><!-- Include Three.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script>document.addEventListener('DOMContentLoaded', function() {
+    // Password toggle functionalityconst passwordToggle = document.getElementById('passwordToggle');
+    if (passwordToggle) {
+        passwordToggle.addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                this.textContent = 'Hide';
+            } else {
+                passwordInput.type = 'password';
+                this.textContent = 'Show';
+            }
         });
-    </script>
+    }
+
+    // Initialize WebGL backgroundconst canvas = document.getElementById('bgCanvas');
+    const renderer = newTHREE.WebGLRenderer({ canvas });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = newTHREE.Scene();
+    const camera = newTHREE.Camera();
+    camera.position.z = 1;
+
+    const geometry = newTHREE.PlaneBufferGeometry(2, 2);
+
+    const uniforms = {
+        u_time: { type: "f", value: 1.0 },
+        u_resolution: { type: "v2", value: newTHREE.Vector2() }
+    };
+
+    const material = newTHREE.ShaderMaterial({
+        uniforms: uniforms,
+        vertexShader: `
+            void main() {
+                gl_Position = vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform vec2 u_resolution;
+            uniform float u_time;
+
+            void main() {
+                vec2 st = gl_FragCoord.xy / u_resolution;
+                vec3 color = vec3(0.0);
+
+                color = vec3(0.1 + 0.1 * sin(u_time + st.x * 10.0),
+                             0.1 + 0.1 * sin(u_time + st.y * 10.0),
+                             0.1 + 0.1 * sin(u_time + st.x * 10.0 + st.y * 10.0));
+
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `
+    });
+
+    const mesh = newTHREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    constonWindowResize = () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        uniforms.u_resolution.value.x = renderer.domElement.width;
+        uniforms.u_resolution.value.y = renderer.domElement.height;
+    };
+    window.addEventListener('resize', onWindowResize, false);
+    onWindowResize();
+
+    constanimate = () => {
+        requestAnimationFrame(animate);
+        uniforms.u_time.value += 0.05;
+        renderer.render(scene, camera);
+    };
+    animate();
+});
+</script>
 {% endblock %}
