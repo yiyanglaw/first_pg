@@ -1,20 +1,137 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="text-center mb-4">Register</h1>
-<div class="row">
-    <div class="col-md-6 offset-md-3">
-        <form method="post">
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" name="username" required>
+<div id="particles-js"></div>
+
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: calc(100vh - 56px);">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-body p-5">
+                    <h1 class="text-center mb-4">Register</h1>
+                    <form method="post">
+                        <div class="mb-4">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control form-control-lg" id="username" name="username" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control form-control-lg" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Register</button>
+                    </form>
+                </div>
             </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Register</button>
-        </form>
+        </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+    particlesJS('particles-js', {
+        particles: {
+            number: {
+                value: 400,
+                density: {
+                    enable: true,
+                    value_area: 800
+                }
+            },
+            color: {
+                value: "#ffffff"
+            },
+            shape: {
+                type: "circle",
+                stroke: {
+                    width: 0,
+                    color: "#000000"
+                },
+                polygon: {
+                    nb_sides: 5
+                }
+            },
+            opacity: {
+                value: 0.7,
+                random: true,
+                anim: {
+                    enable: false,
+                    speed: 1,
+                    opacity_min: 0.1,
+                    sync: false
+                }
+            },
+            size: {
+                value: 4,
+                random: true,
+                anim: {
+                    enable: false,
+                    speed: 40,
+                    size_min: 0.1,
+                    sync: false
+                }
+            },
+            line_linked: {
+                enable: false
+            },
+            move: {
+                enable: true,
+                speed: 2,
+                direction: "bottom",
+                random: false,
+                straight: false,
+                out_mode: "out",
+                bounce: false,
+                attract: {
+                    enable: false,
+                    rotateX: 600,
+                    rotateY: 1200
+                }
+            }
+        },
+        interactivity: {
+            detect_on: "canvas",
+            events: {
+                onhover: {
+                    enable: false
+                },
+                onclick: {
+                    enable: false
+                },
+                resize: true
+            }
+        },
+        retina_detect: true
+    });
+</script>
+
+<style>
+    #particles-js {
+        position: fixed;
+        width: 100%;
+        height: calc(100% - 56px);
+        top: 56px;
+        left: 0;
+        background-color: #a3b5cc;  /* Adjusted to a snowy sky color */
+        z-index: -1;
+    }
+    .card {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    }
+    .btn-primary {
+        background-color: #2C3E50;
+        border-color: #2C3E50;
+    }
+    .btn-primary:hover {
+        background-color: #1a252f;
+        border-color: #1a252f;
+    }
+    .form-control-lg {
+        font-size: 1.1rem;
+    }
+    body {
+        overflow-y: hidden;  /* Prevent scrolling */
+    }
+</style>
 {% endblock %}
