@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_file, abort, Response, redirect, url_for, flash, session
+from flask import Flask, request, render_template, send_file, abort, Response, redirect, url_for, flash, session, jsonify
 import psycopg2
 import os
 import io
@@ -6,9 +6,7 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 import functools
-from flask import jsonify
 from datetime import datetime, timedelta
-
 
 load_dotenv()
 
@@ -163,7 +161,7 @@ def main():
     sort = request.args.get('sort', 'name')
     order = request.args.get('order', 'asc')
     
-    query = f"SELECT * FROM patients WHERE name ILIKE %s OR phone ILIKE %s ORDER BY {sort} {order}"
+    query = f"SELECT * FROM patients WHERE LOWER(name) ILIKE LOWER(%s) OR phone ILIKE %s ORDER BY LOWER({sort}) {order}"
     cur.execute(query, (f'%{search}%', f'%{search}%'))
     patients = cur.fetchall()
     
@@ -253,19 +251,6 @@ def update_patient(id):
     
     return render_template('update_patient.html', patient=patient)
 
-
-@app.route('/reset_db')
-def reset_db():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("DROP TABLE IF EXISTS patients")
-    conn.commit()
-    cur.close()
-    conn.close()
-    create_tables()
-    return "Database reset successfully"
-
-
 @app.route('/delete_patient/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_patient(id):
@@ -281,11 +266,8 @@ def delete_patient(id):
     
     if request.method == 'POST':
         if request.form.get('confirm') == 'yes':
-            # Delete associated records first
             cur.execute("DELETE FROM heart_rates WHERE patient_id = %s", (id,))
             cur.execute("DELETE FROM medicine_intakes WHERE patient_id = %s", (id,))
-            
-            # Now delete the patient
             cur.execute("DELETE FROM patients WHERE id = %s", (id,))
             conn.commit()
             flash('Patient and associated records deleted successfully.', 'success')
@@ -319,14 +301,13 @@ def add_heart_rate(patient_id):
 @login_required
 def add_medicine_intake(patient_id):
     date = request.form['date']
-    time = request.form['time']
     taken = request.form['taken'] == 'yes'
     
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute("INSERT INTO medicine_intakes (patient_id, date, time, taken) VALUES (%s, %s, %s, %s)", 
-                (patient_id, date, time, taken))
+    cur.execute("INSERT INTO medicine_intakes (patient_id, date, taken) VALUES (%s, %s, %s)", 
+                (patient_id, date, taken))
     conn.commit()
     
     cur.close()
@@ -357,7 +338,7 @@ def download_image(patient_id):
     else:
         abort(404)
         
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
     conn = get_db_connection()
@@ -365,8 +346,6 @@ def dashboard():
     
     cur.execute("SELECT COUNT(*) FROM patients")
     total_patients = cur.fetchone()[0]
-    
-    # Remove the query for new_patients_this_month as we don't have a created_at column
     
     cur.execute("SELECT COUNT(*) FROM medicine_intakes WHERE date = CURRENT_DATE")
     medicine_intakes_today = cur.fetchone()[0]
@@ -403,6 +382,90 @@ def dashboard():
     """, (month_ago, today))
     unhealthy_heart_rates = cur.fetchall()
     
+    patient_name = request.form.get('patient_name', '')
+    if patient_name:
+        cur.execute("""
+        SELECT p.name, mi.date, mi.taken, hr.rate
+        FROM patients p
+        LEFT JOIN medicine_intakes mi ON p.id = mi.patient_id
+        LEFT JOIN heart_rates hr ON p.id = hr.patient_id AND mi.date = hr.date
+        WHERE LOWER(p.name) LIKE LOWER(%s)
+        ORDER BY mi.date DESC
+        """, (f'%{patient_name}%',))
+        patient_records = cur.fetchall()
+        
+        cur.execute("""
+        SELECT p.age
+        FROM patients p
+        WHERE LOWER(p.name) LIKE LOWER(%s)
+        """, (f'%{patient_name}%',))
+        patient_age = cur.fetchone()[0] if cur.rowcount > 0 else None
+        
+        heart_rate_levels = []
+        for record in patient_records:
+            if record[3]:  # If heart rate is recorded
+                rate = record[3]
+                if patient_age:
+                    if 1 <= patient_age <= 2:
+                        level = 'Normal' if 80 <= rate <= 130 else 'Abnormal'
+                    elif 3 <= patient_age <= 5:
+                        level = 'Normal' if 80 <= rate <= 120 else 'Abnormal'
+                    elif 6 <= patient_age <= 12:
+                        level = 'Normal' if 70 <= rate <= 110 else 'Abnormal'
+                    elif 13 <= patient_age <= 18:
+                        level = 'Normal' if 60 <= rate <= 100 else 'Abnormal'
+                    else:
+                        level = 'Normal' if 60 <= rate <= 100 else 'Abnormal'
+                else:
+                    level = 'Unknown'
+                heart_rate_levels.append(level)
+            else:
+                heart_rate_levels.append('No data')
+        
+        # Get statistics for the selected patient
+        cur.execute("""
+        SELECT 
+            SUM(CASE WHEN mi.taken = FALSE OR mi.taken IS NULL THEN 1 ELSE 0 END) as missed_doses,
+            COUNT(*) as total_doses,
+            AVG(hr.rate) as avg_heart_rate
+        FROM patients p
+        LEFT JOIN medicine_intakes mi ON p.id = mi.patient_id
+        LEFT JOIN heart_rates hr ON p.id = hr.patient_id
+        WHERE LOWER(p.name) LIKE LOWER(%s)
+        """, (f'%{patient_name}%',))
+        patient_stats = cur.fetchone()
+        
+        # Get data for graphs
+        cur.execute("""
+        SELECT 
+            DATE_TRUNC('day', mi.date) as date,
+            SUM(CASE WHEN mi.taken = FALSE OR mi.taken IS NULL THEN 1 ELSE 0 END) as missed_doses
+        FROM patients p
+        LEFT JOIN medicine_intakes mi ON p.id = mi.patient_id
+        WHERE LOWER(p.name) LIKE LOWER(%s)
+        GROUP BY DATE_TRUNC('day', mi.date)
+        ORDER BY DATE_TRUNC('day', mi.date)
+        """, (f'%{patient_name}%',))
+        missed_doses_data = cur.fetchall()
+        
+        cur.execute("""
+        SELECT 
+            DATE_TRUNC('day', hr.date) as date,
+            AVG(hr.rate) as avg_heart_rate
+        FROM patients p
+        LEFT JOIN heart_rates hr ON p.id = hr.patient_id
+        WHERE LOWER(p.name) LIKE LOWER(%s)
+        GROUP BY DATE_TRUNC('day', hr.date)
+        ORDER BY DATE_TRUNC('day', hr.date)
+        """, (f'%{patient_name}%',))
+        heart_rate_data = cur.fetchall()
+    else:
+        patient_records = []
+        heart_rate_levels = []
+        patient_stats = None
+        missed_doses_data = []
+        heart_rate_data = []
+    
     cur.close()
     conn.close()
     
@@ -410,7 +473,13 @@ def dashboard():
                            total_patients=total_patients,
                            medicine_intakes_today=medicine_intakes_today,
                            missed_doses_week=missed_doses_week,
-                           unhealthy_heart_rates=unhealthy_heart_rates)
+                           unhealthy_heart_rates=unhealthy_heart_rates,
+                           patient_records=patient_records,
+                           heart_rate_levels=heart_rate_levels,
+                           patient_stats=patient_stats,
+                           missed_doses_data=missed_doses_data,
+                           heart_rate_data=heart_rate_data)
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404
@@ -434,4 +503,4 @@ def api_patients():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5100, debug=True)
+    app.run(host='0.0.0.0', port=5100, debug=True)        

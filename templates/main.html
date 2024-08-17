@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
+
 <h1 class="text-center mb-4">Patient Management</h1>
+
 <div class="row mb-3">
     <div class="col-md-6">
         <form class="form-inline">
@@ -12,10 +14,11 @@
         <a href="{{ url_for('add_patient') }}" class="btn btn-primary">Add New Patient</a>
     </div>
 </div>
+
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Name</th>
+            <th><a href="{{ url_for('main', sort='name', order='asc' if request.args.get('order') == 'desc' else 'desc') }}">Name</a></th>
             <th>IC</th>
             <th>Phone</th>
             <th>Age</th>
@@ -24,7 +27,7 @@
         </tr>
     </thead>
     <tbody>
-    {% for patient in patients %}
+        {% for patient in patients %}
         <tr>
             <td>{{ patient[1] }}</td>
             <td>{{ patient[2] }}</td>
@@ -37,7 +40,8 @@
                 <a href="{{ url_for('download_image', patient_id=patient[0]) }}" class="btn btn-sm btn-secondary">Download Image</a>
             </td>
         </tr>
-    {% endfor %}
+        {% endfor %}
     </tbody>
 </table>
+
 {% endblock %}
