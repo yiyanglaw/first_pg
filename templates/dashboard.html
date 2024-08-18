@@ -1,74 +1,75 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="container-fluid tech-bg py-5">
+    <h1 class="text-center text-light mb-5 tech-text">Clinic Dashboard</h1>
 
-<h1 class="text-center mb-4">Clinic Dashboard</h1>
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Patients</h5>
-                <p class="card-text">{{ total_patients }}</p>
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card bg-dark text-light mb-4">
+                <div class="card-body">
+                    <h5 class="card-title tech-text">Total Patients</h5>
+                    <p class="display-4">{{ total_patients }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-light mb-4">
+                <div class="card-body">
+                    <h5 class="card-title tech-text">Medicine Intakes Today</h5>
+                    <p class="display-4">{{ medicine_intakes_today }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-dark text-light mb-4">
+                <div class="card-body">
+                    <h5 class="card-title tech-text">Patient Search</h5>
+                    <form method="POST">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="patient_name" placeholder="Patient Name">
+                            <button type="submit" class="btn btn-primary tech-btn">Search</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Medicine Intakes Today</h5>
-                <p class="card-text">{{ medicine_intakes_today }}</p>
+
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h5 class="card-title tech-text">Patients with Most Missed Doses (Last Week)</h5>
+                    <canvas id="missedDosesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h5 class="card-title tech-text">Patients with Unhealthy Heart Rates (Last Month)</h5>
+                    <canvas id="heartRatesChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row mt-4">
-    <div class="col-md-6">
-        <h2>Patients with Most Missed Doses (Last Week)</h2>
-        <ul>
-            {% for patient in missed_doses_week %}
-                <li>{{ patient[0] }}: {{ patient[1] }} missed doses</li>
-            {% endfor %}
-        </ul>
-    </div>
-    <div class="col-md-6">
-        <h2>Patients with Unhealthy Heart Rates (Last Month)</h2>
-        <ul>
-            {% for patient in unhealthy_heart_rates %}
-                <li>{{ patient[0] }}: Average rate {{ patient[1]|round(2) }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-12">
-        <h2>Patient Specific Information</h2>
-        <form method="post">
-            <div class="form-group">
-                <label for="patient_name">Patient Name:</label>
-                <input type="text" class="form-control" id="patient_name" name="patient_name" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Get Patient Info</button>
-        </form>
-    </div>
-</div>
-
-{% if patient_records %}
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <h3>Patient Records</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Medicine Intakes</th>
-                        <th>Heart Rate</th>
-                        <th>Heart Rate Level</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for record in patient_records %}
+    {% if patient_records %}
+    <div class="card bg-dark text-light mb-5">
+        <div class="card-body">
+            <h5 class="card-title tech-text">Patient Records</h5>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Medicine Intakes</th>
+                            <th>Heart Rate</th>
+                            <th>Heart Rate Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in patient_records %}
                         <tr>
                             <td>{{ record.date }}</td>
                             <td>
@@ -79,101 +80,153 @@
                             <td>{{ record.heart_rate if record.heart_rate else 'N/A' }}</td>
                             <td>{{ heart_rate_levels[loop.index0] }}</td>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-
-    <div class="row mt-4">
+    <div class="row">
         <div class="col-md-6">
-            <h3>Missed Doses Graph</h3>
-            <canvas id="missedDosesChart"></canvas>
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h5 class="card-title tech-text">Missed Doses Graph</h5>
+                    <canvas id="patientMissedDosesChart"></canvas>
+                </div>
+            </div>
         </div>
         <div class="col-md-6">
-            <h3>Heart Rate Graph</h3>
-            <canvas id="heartRateChart"></canvas>
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h5 class="card-title tech-text">Heart Rate Graph</h5>
+                    <canvas id="patientHeartRateChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
+    {% endif %}
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Prepare data for Missed Doses Chart
-        var missedDosesData = {
-            labels: [{% for record in patient_records %}'{{ record.date }}',{% endfor %}],
+<style>
+    .tech-bg {
+        background: linear-gradient(45deg, #1a1a1a, #2c3e50);
+        min-height: 100vh;
+    }
+    .tech-text {
+        font-family: 'Orbitron', sans-serif;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    .tech-btn {
+        border: none;
+        background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .tech-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 210, 255, 0.5);
+    }
+    .card {
+        backdrop-filter: blur(10px);
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .table {
+        color: #fff;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Chart for Missed Doses
+    const missedDosesCtx = document.getElementById('missedDosesChart').getContext('2d');
+    new Chart(missedDosesCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ missed_doses_week|map(attribute=0)|list|tojson }},
             datasets: [{
                 label: 'Missed Doses',
-                data: [{% for record in patient_records %}
-                    {{ record.intakes|selectattr('taken', 'equalto', false)|list|length }},
-                {% endfor %}],
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                data: {{ missed_doses_week|map(attribute=1)|list|tojson }},
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
                 borderColor: 'rgba(255, 99, 132, 1)',
                 borderWidth: 1
             }]
-        };
-
-        // Create Missed Doses Chart
-        var missedDosesCtx = document.getElementById('missedDosesChart').getContext('2d');
-        var missedDosesChart = new Chart(missedDosesCtx, {
-            type: 'bar',
-            data: missedDosesData,
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Number of Missed Doses'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Date'
-                        }
-                    }
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
+        }
+    });
 
-        // Prepare data for Heart Rate Chart
-        var heartRateData = {
-            labels: [{% for record in patient_records %}'{{ record.date }}',{% endfor %}],
+    // Chart for Unhealthy Heart Rates
+    const heartRatesCtx = document.getElementById('heartRatesChart').getContext('2d');
+    new Chart(heartRatesCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ unhealthy_heart_rates|map(attribute=0)|list|tojson }},
             datasets: [{
-                label: 'Heart Rate',
-                data: [{% for record in patient_records %}
-                    {{ record.heart_rate if record.heart_rate else 'null' }},
-                {% endfor %}],
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                label: 'Average Heart Rate',
+                data: {{ unhealthy_heart_rates|map(attribute=1)|list|tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 1
             }]
-        };
-
-        // Create Heart Rate Chart
-        var heartRateCtx = document.getElementById('heartRateChart').getContext('2d');
-        var heartRateChart = new Chart(heartRateCtx, {
-            type: 'line',
-            data: heartRateData,
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        title: {
-                            display: true,
-                            text: 'Heart Rate (bpm)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Date'
-                        }
-                    }
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
-    </script>
-{% endif %}
+        }
+    });
 
+    {% if patient_records %}
+    // Patient-specific charts
+    const patientMissedDosesCtx = document.getElementById('patientMissedDosesChart').getContext('2d');
+    new Chart(patientMissedDosesCtx, {
+        type: 'line',
+        data: {
+            labels: {{ patient_records|map(attribute='date')|list|tojson }},
+            datasets: [{
+                label: 'Missed Doses',
+                data: {{ patient_records|map(attribute='intakes')|map('selectattr', 'taken', 'equalto', false)|map('list')|map('length')|list|tojson }},
+                borderColor: 'rgba(255, 99, 132, 1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    const patientHeartRateCtx = document.getElementById('patientHeartRateChart').getContext('2d');
+    new Chart(patientHeartRateCtx, {
+        type: 'line',
+        data: {
+            labels: {{ patient_records|map(attribute='date')|list|tojson }},
+            datasets: [{
+                label: 'Heart Rate',
+                data: {{ patient_records|map(attribute='heart_rate')|list|tojson }},
+                borderColor: 'rgba(54, 162, 235, 1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
 {% endblock %}
