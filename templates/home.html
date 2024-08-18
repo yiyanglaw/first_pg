@@ -1,23 +1,75 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="jumbotron">
-    <h1 class="display-4 text-center mb-4">Welcome to the Clinic Management System</h1>
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
+<div class="container-fluid tech-bg">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-md-8 text-center">
+            <h1 class="display-2 text-light mb-4 tech-text">Clinic Management System</h1>
+            <p class="lead text-light mb-5">Experience the future of healthcare management</p>
+            <div class="card bg-dark text-light">
                 <div class="card-body">
-                    <h5 class="card-title">Get Started</h5>
+                    <h5 class="card-title mb-4">Get Started</h5>
                     {% if 'user_id' in session %}
-                        <p class="card-text">You are logged in as {{ session['username'] }}.</p>
-                        <a href="{{ url_for('main') }}" class="btn btn-primary">Go to Main Page</a>
+                        <p class="mb-4">Welcome back, {{ session['username'] }}!</p>
+                        <a href="{{ url_for('main') }}" class="btn btn-primary btn-lg tech-btn">Go to Main Page</a>
                     {% else %}
-                        <p class="card-text">Please login or register to access the system.</p>
-                        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-                        <a href="{{ url_for('register') }}" class="btn btn-secondary">Register</a>
+                        <p class="mb-4">Please login or register to access the system.</p>
+                        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg me-3 tech-btn">Login</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-secondary btn-lg tech-btn">Register</a>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .tech-bg {
+        background: linear-gradient(45deg, #1a1a1a, #2c3e50);
+        min-height: 100vh;
+    }
+    .tech-text {
+        font-family: 'Orbitron', sans-serif;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    .tech-btn {
+        border: none;
+        background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .tech-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 210, 255, 0.5);
+    }
+    .card {
+        backdrop-filter: blur(10px);
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    // Three.js background animation
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
+
+    camera.position.z = 5;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+        renderer.render(scene, camera);
+    }
+    animate();
+</script>
 {% endblock %}
