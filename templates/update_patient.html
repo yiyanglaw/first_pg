@@ -82,10 +82,10 @@
                 {% for i in range(1, patient[10] + 1) %}
                     <div class="mb-3">
                         <label for="intake_time_{{ i }}" class="form-label">Time {{ i }}</label>
-                        <input type="time" class="form-control" id="intake_time_{{ i }}" name="time_{{ i }}" value="{{ patient[11][i-1] }}" required>
+                        <input type="time" class="form-control" id="intake_time_{{ i }}" name="time_{{ i }}" value="{{ patient[11][i-1] }}" readonly>
                         <select class="form-select mt-2" id="taken_{{ i }}" name="taken_{{ i }}" required>
                             <option value="yes">Taken</option>
-                            <option value="no">Not Taken</option>
+                            <option value="no" selected>Not Taken</option>
                         </select>
                     </div>
                 {% endfor %}
