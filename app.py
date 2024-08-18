@@ -13,7 +13,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-DATABASE_URL = "postgresql://cms_data_user:zD3zjXh6FRSd4GbInv0gALpHoCejfdCG@dpg-cr0aic3v2p9s73a4gpc0-a/cms_data"
+DATABASE_URL = "postgresql://first_5rke_user:N4g4IbduO1OZ5w9PaExS907BHibpay5m@dpg-cqvifr5svqrc73c3jovg-a/first_5rke"
 
 result = urlparse(DATABASE_URL)
 username = result.username
@@ -190,17 +190,35 @@ def add_patient():
         conn = get_db_connection()
         cur = conn.cursor()
         
-        cur.execute("""
-        INSERT INTO patients (name, ic, phone, age, gender, address, image, medicine_type, medicine_interval, medicine_frequency, medicine_times)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (name, ic, phone, age, gender, address, psycopg2.Binary(image) if image else None, medicine_type, medicine_interval, medicine_frequency, medicine_times))
-        
-        conn.commit()
-        cur.close()
-        conn.close()
-        
-        flash('Patient added successfully.', 'success')
-        return redirect(url_for('main'))
+        try:
+            cur.execute("""
+            INSERT INTO patients (name, ic, phone, age, gender, address, image, medicine_type, medicine_interval, medicine_frequency, medicine_times)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """, (name, ic, phone, age, gender, address, psycopg2.Binary(image) if image else None, medicine_type, medicine_interval, medicine_frequency, medicine_times))
+            
+            patient_id = cur.fetchone()[0]
+            
+            # Initialize medicine intakes for today
+            today = datetime.now().date()
+            for time in medicine_times:
+                cur.execute("""
+                INSERT INTO medicine_intakes (patient_id, date, time, taken)
+                VALUES (%s, %s, %s, %s)
+                """, (patient_id, today, time, False))
+            
+            conn.commit()
+            flash('Patient added successfully.', 'success')
+            return redirect(url_for('main'))
+        except psycopg2.IntegrityError as e:
+            conn.rollback()
+            if "patients_ic_key" in str(e):
+                flash('A patient with this IC already exists.', 'danger')
+            else:
+                flash('An error occurred while adding the patient.', 'danger')
+        finally:
+            cur.close()
+            conn.close()
     
     return render_template('add_patient.html')
     
@@ -223,26 +241,33 @@ def update_patient(id):
         medicine_frequency = int(request.form['medicine_frequency'])
         medicine_times = [request.form.get(f'medicine_time_{i}') for i in range(1, medicine_frequency + 1)]
         
-        if image:
-            cur.execute("""
-            UPDATE patients 
-            SET name=%s, ic=%s, phone=%s, age=%s, gender=%s, address=%s, image=%s, 
-                medicine_type=%s, medicine_interval=%s, medicine_frequency=%s, medicine_times=%s
-            WHERE id=%s
-            """, (name, ic, phone, age, gender, address, psycopg2.Binary(image), 
-                  medicine_type, medicine_interval, medicine_frequency, medicine_times, id))
-        else:
-            cur.execute("""
-            UPDATE patients 
-            SET name=%s, ic=%s, phone=%s, age=%s, gender=%s, address=%s, 
-                medicine_type=%s, medicine_interval=%s, medicine_frequency=%s, medicine_times=%s
-            WHERE id=%s
-            """, (name, ic, phone, age, gender, address, 
-                  medicine_type, medicine_interval, medicine_frequency, medicine_times, id))
-        
-        conn.commit()
-        flash('Patient updated successfully.', 'success')
-        return redirect(url_for('main'))
+        try:
+            if image:
+                cur.execute("""
+                UPDATE patients 
+                SET name=%s, ic=%s, phone=%s, age=%s, gender=%s, address=%s, image=%s, 
+                    medicine_type=%s, medicine_interval=%s, medicine_frequency=%s, medicine_times=%s
+                WHERE id=%s
+                """, (name, ic, phone, age, gender, address, psycopg2.Binary(image), 
+                      medicine_type, medicine_interval, medicine_frequency, medicine_times, id))
+            else:
+                cur.execute("""
+                UPDATE patients 
+                SET name=%s, ic=%s, phone=%s, age=%s, gender=%s, address=%s, 
+                    medicine_type=%s, medicine_interval=%s, medicine_frequency=%s, medicine_times=%s
+                WHERE id=%s
+                """, (name, ic, phone, age, gender, address, 
+                      medicine_type, medicine_interval, medicine_frequency, medicine_times, id))
+            
+            conn.commit()
+            flash('Patient updated successfully.', 'success')
+            return redirect(url_for('main'))
+        except psycopg2.IntegrityError as e:
+            conn.rollback()
+            if "patients_ic_key" in str(e):
+                flash('A patient with this IC already exists.', 'danger')
+            else:
+                flash('An error occurred while updating the patient.', 'danger')
     
     cur.execute("SELECT * FROM patients WHERE id = %s", (id,))
     patient = cur.fetchone()
@@ -306,16 +331,20 @@ def add_medicine_intake(patient_id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute("SELECT medicine_frequency FROM patients WHERE id = %s", (patient_id,))
-    medicine_frequency = cur.fetchone()[0]
+    cur.execute("SELECT medicine_frequency, medicine_times FROM patients WHERE id = %s", (patient_id,))
+    patient_data = cur.fetchone()
+    medicine_frequency = patient_data[0]
+    medicine_times = patient_data[1]
+    
+    # Delete existing intakes for the given date
+    cur.execute("DELETE FROM medicine_intakes WHERE patient_id = %s AND date = %s", (patient_id, date))
     
     for i in range(1, medicine_frequency + 1):
-        time = request.form.get(f'time_{i}')
+        time = medicine_times[i-1]
         taken = request.form.get(f'taken_{i}') == 'yes'
         
-        if time:
-            cur.execute("INSERT INTO medicine_intakes (patient_id, date, time, taken) VALUES (%s, %s, %s, %s)", 
-                        (patient_id, date, time, taken))
+        cur.execute("INSERT INTO medicine_intakes (patient_id, date, time, taken) VALUES (%s, %s, %s, %s)", 
+                    (patient_id, date, time, taken))
     
     conn.commit()
     cur.close()
@@ -485,4 +514,3 @@ def api_patients():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5100, debug=True)
-        
