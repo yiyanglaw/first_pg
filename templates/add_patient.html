@@ -36,39 +36,45 @@
                 <label for="image" class="form-label">Patient Image</label>
                 <input type="file" class="form-control" id="image" name="image">
             </div>
-            <div class="mb-3">
+             <div class="mb-3">
                 <label for="medicine_type" class="form-label">Medicine Type</label>
                 <input type="text" class="form-control" id="medicine_type" name="medicine_type" required>
             </div>
+
             <div class="mb-3">
                 <label for="medicine_interval" class="form-label">Medicine Interval (hours)</label>
                 <input type="number" class="form-control" id="medicine_interval" name="medicine_interval" required>
             </div>
+
             <div class="mb-3">
                 <label for="medicine_frequency" class="form-label">Medicine Frequency (times per day)</label>
-                <input type="number" class="form-control" id="medicine_frequency" name="medicine_frequency" required onchange="updateMedicineTimes()">
+                <input type="number" class="form-control" id="medicine_frequency" name="medicine_frequency" required>
             </div>
-            <div id="medicine_times_container"></div>
+
+            <div id="medicine_times_container">
+                <!-- This will be populated dynamically based on medicine frequency -->
+            </div>
+
             <button type="submit" class="btn btn-primary">Add Patient</button>
         </form>
     </div>
 </div>
 
 <script>
-function updateMedicineTimes() {
-    const frequency = document.getElementById('medicine_frequency').value;
-    const container = document.getElementById('medicine_times_container');
-    container.innerHTML = '';
-    
-    for (let i = 1; i <= frequency; i++) {
-        const div = document.createElement('div');
-        div.className = 'mb-3';
-        div.innerHTML = `
-            <label for="medicine_time_${i}" class="form-label">Medicine Time ${i}</label>
-            <input type="time" class="form-control" id="medicine_time_${i}" name="medicine_time_${i}" required>
-        `;
-        container.appendChild(div);
-    }
-}
+    document.getElementById('medicine_frequency').addEventListener('change', function() {
+        var container = document.getElementById('medicine_times_container');
+        container.innerHTML = '';
+        var frequency = parseInt(this.value);
+        for (var i = 1; i <= frequency; i++) {
+            var div = document.createElement('div');
+            div.className = 'mb-3';
+            div.innerHTML = `
+                <label for="medicine_time_${i}" class="form-label">Medicine Time ${i}</label>
+                <input type="time" class="form-control" id="medicine_time_${i}" name="medicine_time_${i}" required>
+            `;
+            container.appendChild(div);
+        }
+    });
 </script>
+
 {% endblock %}
